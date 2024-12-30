@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Form</title>
+  <script>
+    // JavaScript를 이용해 로그인 함수를 정의합니다.
+    function login() {
+        // 로그인 성공 시 홈페이지로 이동하는 로직을 구현합니다.
+        // 'home.html' 대신 실제 홈페이지 URL을 넣으세요.
+        window.location.href = 'index.html';
+    }
+</script>
+  <style>
+      body {
+          font-family: Arial, sans-serif;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          background-color: #f7f7f7;
+          margin: 0;
+      }
+      .login-container {
+          width: 400px;
+          padding: 20px;
+          background-color: #fff;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+          border-radius: 8px;
+      }
+      .login-container h2 {
+          text-align: center;
+          margin-bottom: 20px;
+      }
+      .login-container label {
+          display: block;
+          margin-bottom: 5px;
+          color: #333;
+          font-weight: bold;
+      }
+      .login-container input[type="text"],
+      .login-container input[type="password"] {
+          width: 100%;
+          padding: 10px;
+          margin: 10px 0;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          box-sizing: border-box;
+      }
+      .btn-container {
+          display: flex;
+          justify-content: space-between;
+          gap: 10px; /* 버튼 
+          이의 간격 */
+      }
+      .login-container button,
+      .login-container a {
+          flex: 1; /* flex 컨테이너 내에서 버튼과 링크가 동일한 크기를 차지하도록 설정 */
+          padding: 10px;
+          background-color: #ffc107;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-weight: bold;
+          text-decoration: none;
+          text-align: center;
+          font-size: 14px; /* 버튼 텍스트 크기 작게 설정 */
+          display: flex;
+          justify-content: center; /* 가로 중앙 정렬 */
+          align-items: center; /* 세로 중앙 정렬 */
+      }
+      .login-container button:hover,
+      .login-container a:hover {
+          background-color: #f78d1e;
+      }
+
+    /* 팝업 스타일 */
+    .popup {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+
+    .popup-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        text-align: center;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+  </style>
+</head>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Example</title>
+    <script>
+	    // 팝업 열기
+	    function openPopup(popupId) {
+		    var popup = document.getElementById(popupId);
+		    popup.style.display = "block";
+	    }
+
+	    // 팝업 닫기
+	    function closePopup(popupId) {
+		    var popup = document.getElementById(popupId);
+		    popup.style.display = "none";
+	    }
+
+	    // 창이 닫기 버튼 또는 팝업 바깥을 클릭하여 닫히도록 설정
+	    window.onclick = function(event) {
+		    var popups = document.getElementsByClassName('popup');
+		    for (var i = 0; i < popups.length; i++) {
+			    if (event.target == popups[i]) {
+				    popups[i].style.display = "none";
+			    }
+		    }
+	    }
+
+	    const SERVER_ADDRESS = 'http://localhost:5000';
+
+	    window.onload = function() {
+		    document.querySelector("form").onsubmit = async function(event) {
+			    event.preventDefault();
+
+			    const formData = new FormData(this);
+			    const email = formData.get('email');
+			    const password = formData.get('password');
+
+                //xss방지
+                const sanitizedEmail = check_xss(email);
+                const sanitizedPassword = check_xss(password);
+
+                if (sanitizedEmail === false || sanitizedPassword === false) {
+                    return;
+                }
+
+			    try {
+				    const response = await fetch(`${SERVER_ADDRESS}/users/login`, {
+					    method: 'POST',
+					    headers: {
+						    'Content-Type': 'application/json'
+					    },
+					    body: JSON.stringify({ email, password })
+				    });
+
+				    if (response.ok) {
+
+					    const userData = await response.json();
+					    document.cookie = `userInfo=${JSON.stringify(userData)};`;
+					    alert('로그인 성공');
+					    window.location.href = 'index.html'; // 로그인 성공 시 이동할 페이지
+				    } else {
+					    const errorData  = await response.json();
+					    alert(errorData.message);
+				    }
+			    } catch (error) {
+				    console.error(error);
+				    alert('로그인 중 오류가 발생했습니다.');
+			    }
+		    };
+            document.querySelector("#forgotPasswordPopup form").onsubmit = async function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(this);
+        const emailFind = formData.get('passwordFind');
+
+        try {
+            const response = await fetch(`${SERVER_ADDRESS}/users/findPassword`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: emailFind })
+            });
+
+            if (response.ok) {
+                const { password } = await response.json();
+                alert(`비밀번호는 ${password} 입니다.`);
+                closePopup('forgotPasswordPopup');
+            } else {
+                const errorData  = await response.json();
+                alert(errorData.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('비밀번호 찾기 중 오류가 발생했습니다.');
+        }
+    };
+
+    document.querySelector("#forgotUsernamePopup form").onsubmit = async function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(this);
+        const phone = formData.get('emailFind');
+
+        try {
+            const response = await fetch(`${SERVER_ADDRESS}/users/findEmail`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ phone })
+            });
+
+            if (response.ok) {
+                const { email } = await response.json();
+                alert(`회원님의 이메일은 ${email} 입니다.`);
+                closePopup('forgotUsernamePopup');
+            } else {
+                const errorData  = await response.json();
+                alert(errorData.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('이메일 찾기 중 오류가 발생했습니다.');
+        }
+    };
+	    }
+    </script>
+</head>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.0/purify.min.js" integrity="sha512-ZCsRHqhdDXrq4iTXVZLkGBsOfDlvhvHhEMQlCosf9Oqy1p6xizF1LSWa6uuISGqeh9PmCzfneGcYZvc9t/hjaQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+    const check_xss = (input) => {
+            const DOMPurify = window.DOMPurify;
+            const sanitizedInput = DOMPurify.sanitize(input);
+            if (sanitizedInput !== input) {
+                alert('XSS 공격 가능성이 있는 입력값을 발견했습니다.');
+                return false;
+            }
+            return sanitizedInput;
+        };
+</script>
+
+<body>
+  <div class="login-container">
+    <h2>Login</h2>
+    <form action="" method="post">
+        <label for="email">아이디</label>
+        <input type="text" id="email" name="email" placeholder="이메일을 입력하세요" required>
+  
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" name="password" placeholder="비밀번호를 입력하세요" required>
+  
+      <div class="btn-container">
+        <button type="submit">로그인</button>
+        <a href="auth.html">회원가입</a>
+        <a onclick="openPopup('forgotPasswordPopup')">비밀번호 찾기</a>
+        <a onclick="openPopup('forgotUsernamePopup')">아이디<br>찾기</a>
+      </div>
+    </form>
+  </div>
+  <!-- 비밀번호 찾기 팝업 -->
+  <div id="forgotPasswordPopup" class="popup">
+      <div class="popup-content">
+          <span class="close" onclick="closePopup('forgotPasswordPopup')">&times;</span>
+          <h2>비밀번호 찾기</h2>
+          <form action="/forgot-password" method="post">
+              <label for="passwordFind">가입한 이메일 주소</label>
+              <input type="email" id="passwordFind" name="passwordFind" placeholder="이메일을 입력하세요" required>
+              <button type="submit">전송</button>
+          </form>
+      </div>
+  </div>
+
+  <!-- 아이디 찾기 팝업 -->
+  <div id="forgotUsernamePopup" class="popup">
+      <div class="popup-content">
+          <span class="close" onclick="closePopup('forgotUsernamePopup')">&times;</span>
+          <h2>아이디 찾기</h2>
+          <form action="/forgot-username" method="post">
+              <label for="emailFind">휴대폰</label>
+              <input type="tel" id="emailFind" name="emailFind" placeholder="휴대폰번호를 입력하세요" required>
+              <button type="submit">전송</button>
+          </form>
+      </div>
+  </div>
+</body>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시판</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .add-button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            text-align: center;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .add-button:hover {
+            background-color: #45a049;
+        }
+
+        /* 팝업 스타일 */
+        #postFormPopup {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+
+        #postFormPopup .popup-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            border-radius: 5px;
+        }
+
+        #postFormPopup h2 {
+            text-align: center;
+        }
+
+        #postFormPopup button {
+            display: block;
+            margin: 0 auto;
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            text-align: center;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #postFormPopup button:hover {
+            background-color: #45a049;
+        }
+
+        /* 수정 및 삭제 버튼 스타일 */
+        .edit-delete-btns {
+            display: none;
+        }
+
+        .edit-delete-btns button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-right: 5px;
+            background-color: #f44336;
+            border: none;
+            color: white;
+            text-align: center;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .edit-delete-btns button:hover {
+            background-color: #d32f2f;
+        }
+
+		#createby {
+			display: none;
+		}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>게시판</h1>
+    <table>
+        <thead>
+        <tr>
+            <th>제목</th>
+            <th>내용</th>
+            <th>작성자</th>
+            <th>등록일</th>
+        </tr>
+        </thead>
+        <tbody id="postList">
+        <!-- 여기에 글 목록이 표시됩니다. -->
+        </tbody>
+    </table>
+    <button class="add-button" onclick="openPostForm()">글 등록</button>
+</div>
+
+<!-- 팝업 창 -->
+<div id="postFormPopup" style="display: none;">
+    <div class="popup-content">
+        <h2>글 등록</h2>
+        <form id="postForm">
+            <label for="title">제목:</label>
+            <input type="text" id="title" name="title"><br><br>
+            <label for="content">내용:</label>
+            <textarea id="content" name="content"></textarea><br><br>
+            <label for="createby" style="display: none;">작성자:</label>
+            <input type="text" id="createby" name="createby"><br><br>
+            <button type="submit" id="regBtn">등록</button>
+            <div class="edit-delete-btns">
+                <button type="button" id="editBtn">수정</button>
+                <button type="button" id="deleteBtn">삭제</button>
+            </div>
+            <button type="button" onclick="closePopup()">닫기</button>
+        </form>
+    </div>
+</div>
+
+<script>
+	const SERVER_ADDRESS = 'http://localhost:5000';
+
+	// userInfo 쿠키 가져오기
+	const userInfoCookie = document.cookie
+		.split('; ')
+		.find(cookie => cookie.startsWith('userInfo='));
+
+	let userInfo = null;
+	if (userInfoCookie) {
+		// userInfo 쿠키가 있을 때 사용자 정보 추출
+		userInfo = JSON.parse(userInfoCookie.split('=')[1]);
+	}
+
+	function closePopup() {
+		const postFormPopup = document.getElementById('postFormPopup');
+		postFormPopup.style.display = 'none';
+	}
+
+	// 게시글 목록을 가져오고 화면에 출력하는 함수
+	async function displayPosts() {
+		const postList = document.getElementById('postList');
+		postList.innerHTML = ''; // 기존 목록을 지우고 새로운 목록을 추가하기 위해 초기화
+
+		try {
+			const response = await fetch(`${SERVER_ADDRESS}/board/boardList`);
+			if (!response.ok) {
+				throw new Error('게시글 목록을 가져오는 데 실패했습니다.');
+			}
+			const posts = await response.json();
+
+			posts.forEach(post => {
+				const row = document.createElement('tr');
+				const createAt = new Date(post.createAt).toLocaleString('ko-KR');
+
+				row.innerHTML = `
+                        <td data-postid="${post._id}">${post.title}</td>
+                        <td>${post.content}</td>
+                        <td>${post.createby}</td>
+                        <td>${createAt}</td>
+                    `;
+				row.addEventListener('click', () => openPopup(post));
+				postList.appendChild(row);
+			});
+		} catch (error) {
+			console.error(error);
+			alert('게시글 목록을 불러오는 중 오류가 발생했습니다.');
+		}
+	}
+
+	// 글 등록 폼을 열어주는 함수
+	function openPostForm() {
+
+		// 사용자 정보가 없는 경우에만 알림을 보여줌
+		if (!userInfo) {
+        	alert('로그인이 필요한 기능입니다.');
+        	return; // 함수 종료
+    	}
+
+		const postFormPopup = document.getElementById('postFormPopup');
+		postFormPopup.style.display = 'block';
+
+		// 폼 초기화
+		document.getElementById('postForm').reset();
+		// 수정 및 삭제 버튼 숨기기
+		document.querySelector('.edit-delete-btns').style.display = 'none';
+
+		// 현재 로그인한 사용자의 이메일 값 가져오기
+		if (userInfo) {
+        	document.getElementById('createby').value = userInfo.email;
+    	}
+	}
+
+	// 글 등록 폼 제출 시 처리하는 함수
+	document.getElementById('postForm').addEventListener('submit', async function (event) {
+		event.preventDefault();
+		const title = document.getElementById('title').value;
+		const content = document.getElementById('content').value;
+		const createby = document.getElementById('createby').value;
+
+		try {
+			const response = await fetch(`${SERVER_ADDRESS}/board/boardAdd`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					title,
+					content,
+					createby
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('게시글 등록에 실패했습니다.');
+			}
+
+			alert('게시글이 성공적으로 등록되었습니다.');
+			displayPosts(); // 등록 후 목록을 다시 불러와서 업데이트
+		} catch (error) {
+			console.error(error);
+			alert('게시글 등록 중 오류가 발생했습니다.');
+		}
+
+		// 팝업 창 닫기
+		const postFormPopup = document.getElementById('postFormPopup');
+		postFormPopup.style.display = 'none';
+	});
+
+	// 팝업 창을 열고 게시글의 세부 정보를 표시하는 함수
+	function openPopup(post) {
+		const postFormPopup = document.getElementById('postFormPopup');
+		const editBtn = document.getElementById('editBtn');
+		const deleteBtn = document.getElementById('deleteBtn');
+		const registerBtn = document.getElementById('regbtn');
+
+		// 팝업 창 내용 설정
+		document.getElementById('title').value = post.title;
+		document.getElementById('content').value = post.content;
+		document.getElementById('createby').value = post.createby;
+
+		const postId = post._id;
+		document.getElementById('postForm').setAttribute('data-postid', postId);
+
+		// 수정 및 삭제 버튼 표시 여부 결정
+		const editDeleteBtns = document.querySelector('.edit-delete-btns');
+		if (userInfo && (userInfo.authority === 'Admin'|| userInfo.email === post.createby)) {
+			editDeleteBtns.style.display = 'block';
+		} else if (userInfo!==createby){
+			registerBtn.style.display = 'none'
+		}else {
+			editDeleteBtns.style.display = 'none';
+		}
+
+		// 클릭 이벤트 중복 호출 방지를 위한 변수
+		let isEditBtnClicked = false;
+
+		// 수정 버튼 클릭 시 이벤트 처리
+		editBtn.addEventListener('click', async () => {
+			// 중복 클릭 방지
+			if (isEditBtnClicked) {
+				return;
+			}
+			isEditBtnClicked = true;
+
+			try {
+				const postId = document.getElementById('postForm').getAttribute('data-postid');
+				const title = document.getElementById('title').value;
+				const content = document.getElementById('content').value;
+				const createby = document.getElementById('createby').value;
+
+				const response = await fetch(`${SERVER_ADDRESS}/board/boardUpdate/${postId}`, {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						title,
+						content,
+						createby
+					})
+				});
+
+				if (!response.ok) {
+					throw new Error('게시글 수정에 실패했습니다.');
+				}
+				// 팝업 닫기
+				const postFormPopup = document.getElementById('postFormPopup');
+				postFormPopup.style.display = 'none';
+
+				window.location.reload();
+				alert('게시글이 성공적으로 수정되었습니다.');
+			} catch (error) {
+				console.error(error);
+				alert('게시글 수정 중 오류가 발생했습니다.');
+			} finally {
+				// 클릭 이벤트 리스너 활성화
+				isEditBtnClicked = false;
+			}
+		});
+
+		// 삭제 버튼 클릭 시 이벤트 처리
+		deleteBtn.addEventListener('click', async () => {
+			try {
+				const postId = document.getElementById('postForm').getAttribute('data-postid');
+
+				const response = await fetch(`${SERVER_ADDRESS}/board/boardDelete/${postId}`, {
+					method: 'DELETE'
+				});
+
+				if (!response.ok) {
+					throw new Error('게시글 삭제에 실패했습니다.');
+				}
+
+				alert('게시글이 성공적으로 삭제되었습니다.');
+				window.location.reload();
+			} catch (error) {
+				console.error(error);
+				alert('게시글 삭제 중 오류가 발생했습니다.');
+			}
+		});
+
+		// 팝업 창 열기
+		postFormPopup.style.display = 'block';
+	}
+
+	// 페이지가 로드될 때 게시글 목록을 불러오도록 설정
+	window.onload = function() {
+		displayPosts();
+	};
+</script>
+</body>
+</html>

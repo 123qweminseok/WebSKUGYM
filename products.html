@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> SHOP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+        }
+
+        header {
+            background: #fff;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #333;
+            font-size: 20px;
+        }
+
+        .hero {
+            text-align: center;
+            margin: 0;
+            height: 60vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .products {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .products h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .product-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .product {
+            border: 1px solid #eaeaea;
+            padding: 20px;
+            width: 200px;
+            text-align: center;
+        }
+
+        .product img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .product p {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .product-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .product-buttons a {
+            text-decoration: none;
+        }
+
+        .product-buttons button {
+            background-color: #f8f9fa;
+            border: 1px solid #eaeaea;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .product-buttons button:hover {
+            background-color: #eaeaea;
+        }
+
+        .video-section {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .video-section h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .video-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .video-container video {
+            width: 100%;
+            height: auto;
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .popup label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .popup input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .popup button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1> SHOP</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="cart.html">Cart</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <img src="images/food.png" alt="Featured Bag">
+    </section>
+
+    <section class="products">
+        <h2>Our new Products</h2>
+        <div id="registerProduct" style="display: none;">
+            <a href="javascript:void(0)" onclick="openPopup()">상품등록</a>
+        </div>
+        <div id="popup" class="popup" style="display: none;">
+            <h2>상품 등록</h2>
+            <form id="productForm">
+                <label for="productName">상품명:</label>
+                <input type="text" id="productName" name="productName" required>
+
+                <label for="quantity">갯수:</label>
+                <input type="number" id="quantity" name="quantity" required>
+
+                <label for="price">가격:</label>
+                <input type="text" id="price" name="price" required>
+
+                <label for="imagePath">이미지 경로:</label>
+                <input type="text" id="imagePath" name="imagePath" required>
+
+                <button type="submit">등록</button>
+            </form>
+        </div>
+        <div class="product-list">
+            <!--상품리스트-->
+        </div>
+    </section>
+
+    <section class="video-section">
+        <h2>Our Promotional Video</h2>
+        <div class="video-container">
+            <iframe id="promoVideo" width="100%" height="800" src="https://www.youtube.com/embed/r7fkIaHhVSc?enablejsapi=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+    </section>
+
+    <script>
+        const SERVER_ADDRESS = 'http://localhost:5000';
+
+        // 쿠키에서 특정 이름의 쿠키 값을 가져오는 함수
+        function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts[1];
+        }
+
+        function openPopup() {
+            const popup = document.getElementById('popup');
+            popup.style.display = 'block';
+        }
+
+        document.getElementById('productForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const productName = document.getElementById('productName').value;
+            let quantity = document.getElementById('quantity').value;
+            const price = document.getElementById('price').value;
+            const imagePath = document.getElementById('imagePath').value;
+
+            const intValue = parseInt(quantity);
+            if (isNaN(intValue) || intValue <= 0) {
+                alert("갯수는 양의 정수만 입력 가능합니다.");
+                return;
+            }
+
+            quantity = intValue;
+
+            try {
+                const response = await fetch(`${SERVER_ADDRESS}/goods/goodsReg`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: productName,
+                        count: quantity,
+                        price: price,
+                        img: imagePath
+                    })
+                });
+
+                if (response.ok) {
+                    // 상품 등록 성공
+                    const data = await response.json();
+                    console.log(data);
+                    alert('상품이 성공적으로 등록되었습니다.');
+                } else {
+                    // 상품 등록 실패
+                    alert('상품 등록에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('상품 등록 중 오류가 발생했습니다.');
+            }
+
+            // 팝업 닫기
+            document.getElementById('popup').style.display = 'none';
+        });
+
+        async function loadProductList(userAuthority) {
+            try {
+                const response = await fetch(`${SERVER_ADDRESS}/goods/goodsList`);
+                if (!response.ok) {
+                    throw new Error('상품 목록을 가져오는 데 실패했습니다.');
+                }
+                const goods = await response.json();
+
+                const productList = document.querySelector('.product-list');
+
+                goods.forEach(function (product) {
+                    const productDiv = document.createElement('div');
+                    productDiv.classList.add('product');
+
+                    // 상품 이미지 추가
+                    const image = document.createElement('img');
+                    image.src = product.img;
+                    image.alt = product.name;
+                    productDiv.appendChild(image);
+
+                    // 상품 이름 추가
+                    const nameParagraph = document.createElement('p');
+                    nameParagraph.textContent = product.name;
+                    productDiv.appendChild(nameParagraph);
+
+                    // 상품 가격 추가
+                    const priceParagraph = document.createElement('p');
+                    priceParagraph.textContent = product.price;
+                    productDiv.appendChild(priceParagraph);
+
+                    // 상품 수량 추가
+                    const quantityParagraph = document.createElement('p');
+                    quantityParagraph.textContent = `수량: ${product.count}`;
+                    productDiv.appendChild(quantityParagraph);
+
+                    // 수량 조절 버튼 추가
+                    if (userAuthority === 'Admin') {
+                        const decreaseButton = document.createElement('button');
+                        decreaseButton.textContent = '-';
+                        decreaseButton.addEventListener('click', function () {
+                            if (product.count > 0) {
+                                product.count--;
+                                quantityParagraph.textContent = `수량: ${product.count}`;
+                            }
+                        });
+                        productDiv.appendChild(decreaseButton);
+
+                        const increaseButton = document.createElement('button');
+                        increaseButton.textContent = '+';
+                        increaseButton.addEventListener('click', function () {
+                            product.count++;
+                            quantityParagraph.textContent = `수량: ${product.count}`;
+                        });
+                        productDiv.appendChild(increaseButton);
+                    }
+
+                    // "Admin" 권한을 가진 경우에만 수량 저장 버튼 추가
+                    if (userAuthority === 'Admin') {
+                        const saveQuantityButton = document.createElement('button');
+                        saveQuantityButton.textContent = '수량 저장';
+                        saveQuantityButton.addEventListener('click', async function () {
+                            try {
+                                const response = await fetch(`${SERVER_ADDRESS}/goods/goodsCount`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        _id: product._id,
+                                        count: product.count
+                                    })
+                                });
+
+                                if (!response.ok) {
+                                    throw new Error('수량 저장에 실패했습니다.');
+                                }
+
+                                alert('상품 수량이 저장되었습니다.');
+                            } catch (error) {
+                                console.error(error);
+                                alert('상품 수량 저장 중 오류가 발생했습니다.');
+                            }
+                        });
+                        productDiv.appendChild(saveQuantityButton);
+                    }
+
+                    // 상품 버튼 추가
+                    const buttonsDiv = document.createElement('div');
+                    buttonsDiv.classList.add('product-buttons');
+
+                    // 구매 버튼 추가
+                    const purchaseButton = document.createElement('button');
+                    purchaseButton.textContent = '구매하기';
+                    purchaseButton.addEventListener('click', async function () {
+                        try {
+                            if (product.count > 0) {
+                                // 서버에 해당 상품의 수량을 1 감소시키는 요청을 보냅니다.
+                                const response = await fetch(`${SERVER_ADDRESS}/goods/goodsCount`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        _id: product._id,
+                                        count: product.count - 1 // 수량을 1 감소
+                                    })
+                                });
+
+                                if (!response.ok) {
+                                    throw new Error('수량 업데이트에 실패했습니다.');
+                                }
+
+                                // 성공적으로 수량이 업데이트된 경우
+                                // 장바구니에 상품을 추가하는 로직을 추가
+                                // addToCart(product);
+
+                                // 화면에도 수량을 1 감소
+                                product.count--;
+                                quantityParagraph.textContent = `수량: ${product.count}`;
+                                alert('구매가 완료되었습니다.');
+                            } else {
+                                // 수량이 0 이하로 내려가지 않도록 경고 메시지를 표시합니다.
+                                alert('상품이 품절되었습니다.');
+                            }
+                        } catch (error) {
+                            console.error(error);
+                            alert('상품 수량 업데이트 중 오류가 발생했습니다.');
+                        }
+                    });
+                    buttonsDiv.appendChild(purchaseButton);
+
+                    // 장바구니 담기 버튼 추가
+                    const addToCartButton = document.createElement('button');
+                    addToCartButton.textContent = '장바구니 담기';
+                    addToCartButton.addEventListener('click', function () {
+                        if (product.count > 0) {
+                            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                            cart.push(product);
+                            localStorage.setItem('cart', JSON.stringify(cart));
+                            alert('장바구니에 담았습니다.');
+                        } else {
+                            alert('상품이 품절되었습니다.');
+                        }
+                    });
+                    buttonsDiv.appendChild(addToCartButton);
+
+                    productDiv.appendChild(buttonsDiv);
+
+                    productList.appendChild(productDiv);
+                });
+            } catch (error) {
+                console.error(error);
+                alert('상품 리스트 로딩 중 오류가 발생했습니다.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            let userInfo = null;
+            try {
+                userInfo = JSON.parse(getCookie('userInfo'));
+            } catch (error) {
+                console.error('Failed to parse user info cookie:', error);
+            }
+
+            if (userInfo && userInfo.authority === 'Admin') {
+                document.getElementById('registerProduct').style.display = 'block';
+                loadProductList('Admin');
+            } else {
+                loadProductList('User');
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const iframe = document.getElementById('promoVideo');
+
+            // Ensure the YouTube IFrame API is loaded
+            let player;
+            window.onYouTubeIframeAPIReady = function () {
+                player = new YT.Player('promoVideo', {
+                    events: {
+                        'onReady': function () {
+                            const observer = new IntersectionObserver(entries => {
+                                entries.forEach(entry => {
+                                    if (entry.isIntersecting) {
+                                        player.playVideo();
+                                    } else {
+                                        player.pauseVideo();
+                                    }
+                                });
+                            }, { threshold: 0.5 });
+
+                            observer.observe(iframe);
+                        }
+                    }
+                });
+            };
+
+            // Load YouTube IFrame API
+            const tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            const firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        });
+    </script>
+</body>
+
+</html>

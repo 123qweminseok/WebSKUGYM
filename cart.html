@@ -1,0 +1,148 @@
+<!-- cart.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>장바구니</title>
+    <style>
+        /* 추가된 CSS */
+        #cartItems {
+            display: flex;
+            flex-direction: row; /* 가로로 나열되도록 설정 */
+            flex-wrap: wrap; /* 필요시 여러 줄에 걸쳐 나열 */
+            gap: 10px; /* 각 아이템 사이의 간격 설정 */
+        }
+
+        .cart-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .cart-item img {
+            width: 100px;
+            height: auto;
+        }
+
+        .cart-item p {
+            margin: 0;
+        }
+
+        /* 구매하기 버튼 스타일 */
+        .purchaseItemButton {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            cursor: pointer;
+            transition-duration: 0.4s;
+        }
+
+        .purchaseItemButton:hover {
+            background-color: #3e8e41; /* Darker green */
+        }
+
+        /* 구매 취소 버튼 스타일 */
+        .cancelItemButton {
+            background-color: #f44336; /* Red */
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            cursor: pointer;
+            transition-duration: 0.4s;
+        }
+
+        .cancelItemButton:hover {
+            background-color: #cc0000; /* Darker red */
+        }
+    </style>
+</head>
+<body>
+    <h1>장바구니</h1>
+    <div id="cartItems">
+        <!-- Cart items will be dynamically populated here -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+    const cartItems = JSON.parse(localStorage.getItem('cart')) || [];
+    const cartItemsContainer = document.getElementById('cartItems');
+
+    cartItems.forEach(function (item) {
+        const itemDiv = document.createElement('div');
+        itemDiv.classList.add('cart-item'); // Add class for styling
+        itemDiv.innerHTML = `
+            <img src="${item.img}" alt="${item.name}">
+            <div>
+                <p>${item.name}</p>
+                <p>${item.price}</p>
+            </div>
+            <button class="purchaseItemButton">구매하기</button>
+            <button class="cancelItemButton">구매 취소</button>
+        `;
+
+        // Add event listener for purchase button inside each item
+        const purchaseButton = itemDiv.querySelector('.purchaseItemButton');
+        purchaseButton.addEventListener('click', async function () { // <-- Added async keyword here
+            // Remove item from cartItems array
+            const index = cartItems.indexOf(item);
+            if (index !== -1) {
+                cartItems.splice(index, 1);
+                // Update localStorage
+                localStorage.setItem('cart', JSON.stringify(cartItems));
+                // Remove item from display
+                itemDiv.remove();
+
+                try {
+                    const SERVER_ADDRESS = 'http://localhost:5000'; 
+                    const response = await fetch(`${SERVER_ADDRESS}/goods/goodsCount`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            _id: item._id, 
+                            count: item.count - 1 
+                        })
+                    });
+
+                    const data = await response.json();
+                    console.log('Server response:', data);
+                } catch (error) {
+                    console.error('Error updating count:', error);
+                }
+            }
+        });
+
+        // Add event listener for cancel button inside each item
+        const cancelButton = itemDiv.querySelector('.cancelItemButton');
+        cancelButton.addEventListener('click', function () {
+            // Remove item from cartItems array
+            const index = cartItems.indexOf(item);
+            if (index !== -1) {
+                cartItems.splice(index, 1);
+                // Update localStorage
+                localStorage.setItem('cart', JSON.stringify(cartItems));
+                // Remove item from display
+                itemDiv.remove();
+            }
+        });
+
+        cartItemsContainer.appendChild(itemDiv);
+    });
+
+});
+
+    </script>
+</body>
+</html>
