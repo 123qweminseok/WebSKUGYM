@@ -66,7 +66,8 @@
 ### 4. 비밀번호 찾기 및 이메일 찾기
 | 비밀번호 찾기 | 이메일 찾기 |
 |---------------|------------|
-| ![비밀번호 찾기](https://github.com/user-attachments/assets/find_password.png) | ![이메일 찾기](https://github.com/user-attachments/assets/find_email.png) |
+| ![비밀번호 찾기](https://github.com/user-attachments/assets/1a8e8e2e-b559-4e97-878d-f88485ce01e5)  |
+
 
 ---
 
